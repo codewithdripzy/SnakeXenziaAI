@@ -46,6 +46,8 @@ function getSnakeSnapshot(snake, environment) {
 let model = {
     highEpisode: 0, // High episode count
     highScore: 0,
+    livingStreak: 0, // Count of consecutive lives
+    deathCount: 0, // Count of deaths
     learningRate: 0.5,
     discountFactor: 0.9, // Discount factor for future rewards
     q: {
@@ -65,6 +67,12 @@ let model = {
     },
     setHighEpisode: function(episode) {
         this.highEpisode = episode;
+    },
+    setLivingStreak: function(streak) {
+        this.livingStreak = streak;
+    },
+    setDeathCount: function(count) {
+        this.deathCount = count;
     },
     chooseAction: function(state, epsilon, validActions = [0, 1, 2, 3]) {
         if (!this.q[state]) this.q[state] = [0.0, 0.0, 0.0, 0.0];
@@ -149,6 +157,8 @@ let model = {
                 model: {
                     highScore: this.highScore,
                     highEpisode: this.highEpisode,
+                    livingStreak: this.livingStreak,
+                    deathCount: this.deathCount,
                     learningRate: this.learningRate,
                     discountFactor: this.discountFactor,
                     q: this.q,

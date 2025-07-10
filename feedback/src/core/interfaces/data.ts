@@ -7,6 +7,8 @@ interface ModelStruct {
 interface ModelData {
     highScore: number;
     highEpisode: number;
+    livingStreak: number;
+    deathCount: number;
     learningRate: number;
     discountFactor: number;
     q: Record<string, number[]>; // Assuming 'q' is an object with string keys and array of numbers as values

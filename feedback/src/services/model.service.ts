@@ -35,6 +35,8 @@ class ModelService {
                 discountFactor: model.discountFactor,
                 highScore: model.highScore,
                 highEpisode: model.highEpisode,
+                livingStreak: model.livingStreak || 0, // Ensure livingStreak is set, default to 0 if not provided
+                deathCount: model.deathCount || 0, // Ensure deathCount is set, default to 0 if not provided
                 data: model.q ? JSON.stringify(model.q) : "{}",
             });
 
@@ -43,9 +45,11 @@ class ModelService {
         }
 
         // check if the score and episode are higher than the master model
-        if (model.highScore > masterModel.highScore || (model.highScore === masterModel.highScore && model.highEpisode > masterModel.highEpisode)) {
+        if ((model.highScore > masterModel.highScore && model.livingStreak > masterModel.livingStreak) || (model.highScore === masterModel.highScore && model.highEpisode > masterModel.highEpisode)) {
             masterModel.highScore = model.highScore;
             masterModel.highEpisode = model.highEpisode || 0; // Ensure highEpisode is set, default to 0 if not provided
+            masterModel.livingStreak = model.livingStreak || 0; // Ensure living Streak is set, default to 0 if not provided
+            masterModel.deathCount = model.deathCount || 0; // Ensure deathCount is set, default to 0 if not provided
             masterModel.learningRate = model.learningRate;
             masterModel.discountFactor = model.discountFactor;
             masterModel.data = model.q ? JSON.stringify(model.q) : "{}";
@@ -60,6 +64,8 @@ class ModelService {
                 existingModel.discountFactor = model.discountFactor;
                 existingModel.highScore = model.highScore;
                 existingModel.highEpisode = model.highEpisode || 0; // Ensure highEpisode is set, default to 0 if not provided
+                existingModel.livingStreak = model.livingStreak || 0; // Ensure livingStreak is set, default to 0 if not provided
+                existingModel.deathCount = model.deathCount || 0; // Ensure deathCount
                 existingModel.data = model.q ? JSON.stringify(model.q) : "{}";
 
                 const updatedModel = await existingModel.save();
@@ -72,6 +78,8 @@ class ModelService {
                 discountFactor: model.discountFactor,
                 highScore: model.highScore,
                 highEpisode: model.highEpisode,
+                livingStreak: model.livingStreak || 0, // Ensure livingStreak is set, default to 0 if not provided
+                deathCount: model.deathCount || 0, // Ensure deathCount is set,
                 data: model.q ? JSON.stringify(model.q) : "{}",
             });
 

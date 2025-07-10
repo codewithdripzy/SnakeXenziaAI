@@ -14,6 +14,14 @@ const modelSchema = new Schema({
         type: Number,
         default: 0
     },
+    livingStreak: {
+        type: Number,
+        default: 0
+    },
+    deathCount: {
+        type: Number,
+        default: 0
+    },
     learningRate: {
         type: Number,
         default: 0.5

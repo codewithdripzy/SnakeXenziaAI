@@ -2,8 +2,13 @@ let modelId;
 
 let EPISODE = 0;  // Current episode number
 let SCORE = 0; // Initial score
+
 let HIGH_SCORE = 0; // High score
 let NET_EPISODE = 0;
+let HIGHEST_LIVING_STREAK = 0; // High score for living streak
+
+let DEATH_COUNT = 0; // Count of deaths
+let LIVING_STREAK = 0; // Count of consecutive lives
 
 let GAME_OVER = false; // Game over flag
 let GAME_STARTED = false; // Game started flag
@@ -64,15 +69,23 @@ async function loadModel() {
 
         model.setHighScore(modelData.highScore);
         model.setHighEpisode(modelData.highEpisode);
+        model.setLivingStreak(modelData.livingStreak);
+        model.setDeathCount(modelData.deathCount);
         model.setLearningRate(modelData.learningRate);
         model.setFutureFactor(modelData.discountFactor)
         model.loadModel(JSON.parse(data));
 
+        HIGH_SCORE = modelData.highScore;
+        NET_EPISODE = modelData.highEpisode;
+        HIGHEST_LIVING_STREAK = modelData.highLivingStreak;
+
         let highScore = document.getElementById("hi-score");
         let highEpisode = document.getElementById("hi-episode");
+        let highLivingStreak = document.getElementById("hi-living-streak");
 
         highScore.innerHTML = modelData.highScore;
         highEpisode.innerHTML = modelData.highEpisode;
+        highLivingStreak.innerHTML = modelData.livingStreak;
 
         startGame();
     } catch (error) {
@@ -354,6 +367,22 @@ function loop() {
         feedback = -1;
         GAME_OVER = true;
         console.log("Game Over!");
+
+        DEATH_COUNT += 1; // Increment death count
+        model.setDeathCount(DEATH_COUNT);
+        document.getElementById("death-count").innerHTML = DEATH_COUNT; // Update death count display
+        
+        if(LIVING_STREAK > HIGHEST_LIVING_STREAK) {
+            HIGHEST_LIVING_STREAK = LIVING_STREAK; // Update highest living streak
+            const highLivingStreak = document.getElementById("hi-living-streak");
+            
+            highLivingStreak.innerHTML = HIGHEST_LIVING_STREAK; // Update the display
+            console.log("New High Living Streak:", HIGHEST_LIVING_STREAK);
+        }
+
+        model.setLivingStreak(LIVING_STREAK); // Update the model
+        LIVING_STREAK = 0; // Reset living streak
+
         resetGame(); // Reset the game
         return;
     }
@@ -392,12 +421,31 @@ function loop() {
         feedback = -1;
         GAME_OVER = true;
         console.log("Game Over!");
+
+        DEATH_COUNT += 1; // Increment death count
+        model.setDeathCount(DEATH_COUNT);
+        document.getElementById("death-count").innerHTML = DEATH_COUNT; // Update death count display
+
+        if(LIVING_STREAK > HIGHEST_LIVING_STREAK) {
+            HIGHEST_LIVING_STREAK = LIVING_STREAK; // Update highest living streak
+            const highLivingStreak = document.getElementById("hi-living-streak");
+            
+            highLivingStreak.innerHTML = HIGHEST_LIVING_STREAK; // Update the display
+            
+            console.log("New High Living Streak:", HIGHEST_LIVING_STREAK);
+        }
+
+        model.setLivingStreak(LIVING_STREAK); // Update the model
+        LIVING_STREAK = 0; // Reset living streak
         resetGame(); // Reset the game
         // clearInterval(gameLoop);
         return;
     }
 
     feedback += 0.1 // for surviving the move
+    LIVING_STREAK += 1; // Increment living streak
+
+    document.getElementById("living-streak").innerHTML = LIVING_STREAK; // Update living streak display
 
     // 5️⃣ Update Q-table & get next action
     const predictedAction = model.predict(
