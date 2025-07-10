@@ -44,17 +44,17 @@ class AmiraServer{
         const database = new Database();
         await database.getConnection();
 
-        this.io.on("connection", (socket) => {
-            console.log("User connected to Assitant");
+        // this.io.on("connection", (socket) => {
+        //     console.log("User connected to Assitant");
 
-            socket.on("transcript", async (message) => {
-                console.log(message);
-            });
+        //     socket.on("transcript", async (message) => {
+        //         console.log(message);
+        //     });
 
-            socket.on("disconnect", () => {
-                console.log("User disconnected");
-            });
-        });
+        //     socket.on("disconnect", () => {
+        //         console.log("User disconnected");
+        //     });
+        // });
     }
 
     route(){

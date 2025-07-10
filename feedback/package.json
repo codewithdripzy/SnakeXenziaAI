@@ -7,7 +7,8 @@
     "start": "'ts-node' src/server.ts",
     "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/app.ts",
     "get-pkg": "npm i joi && npm fund && clear && sudo npm run dev",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
