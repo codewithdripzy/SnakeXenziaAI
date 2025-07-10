@@ -53,8 +53,7 @@ let model = {
     q: {
     },
     loadModel: function (model) {
-        this.q = model.q;
-        this.highScore = model.highScore;
+        this.q = model;
     },
     setLearningRate: function(rate) {
         this.learningRate = rate;

@@ -45,7 +45,7 @@ class ModelService {
         }
 
         // check if the score and episode are higher than the master model
-        if ((model.highScore > masterModel.highScore && model.livingStreak > masterModel.livingStreak) || (model.highScore === masterModel.highScore && model.highEpisode > masterModel.highEpisode)) {
+        if ((model.highScore >= masterModel.highScore && model.livingStreak >= masterModel.livingStreak) || (model.highScore === masterModel.highScore && model.highEpisode > masterModel.highEpisode)) {
             masterModel.highScore = model.highScore;
             masterModel.highEpisode = model.highEpisode || 0; // Ensure highEpisode is set, default to 0 if not provided
             masterModel.livingStreak = model.livingStreak || 0; // Ensure living Streak is set, default to 0 if not provided

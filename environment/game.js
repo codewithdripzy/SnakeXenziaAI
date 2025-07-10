@@ -65,7 +65,7 @@ async function loadModel() {
         const { data: modelData } = await res.json();
 
         // Load the model data into the AI
-        const { data } = modelData.model;
+        const { data } = modelData;
 
         model.setHighScore(modelData.highScore);
         model.setHighEpisode(modelData.highEpisode);
@@ -77,11 +77,13 @@ async function loadModel() {
 
         HIGH_SCORE = modelData.highScore;
         NET_EPISODE = modelData.highEpisode;
-        HIGHEST_LIVING_STREAK = modelData.highLivingStreak;
+        HIGHEST_LIVING_STREAK = modelData.livingStreak;
 
         let highScore = document.getElementById("hi-score");
         let highEpisode = document.getElementById("hi-episode");
         let highLivingStreak = document.getElementById("hi-living-streak");
+
+        console.log("Model loaded with data:", JSON.parse(data));
 
         highScore.innerHTML = modelData.highScore;
         highEpisode.innerHTML = modelData.highEpisode;
@@ -89,6 +91,8 @@ async function loadModel() {
 
         startGame();
     } catch (error) {
+        console.log("Error loading model:", error);
+        
         console.warn("Error loading model, Creating a new default model");
         startGame();
     }
@@ -145,7 +149,7 @@ function createFood(environment, foodSize = 1) {
         foodY = Math.floor(Math.random() * ENVIRONMENT_SIZE);
     } while (environment[foodX][foodY] !== 0); // Ensure food is placed in an empty cell
 
-    console.log(`Placing food at (${foodX}, ${foodY}) with size ${foodSize}`);
+    // console.log(`Placing food at (${foodX}, ${foodY}) with size ${foodSize}`);
     
     environment[foodX][foodY] = 1; // 1 represents food
     return environment;
@@ -220,7 +224,7 @@ function addSnakeToEnvironment(snake, environment) {
     if (!placed) {
         console.error("Failed to place snake after multiple attempts.");
     } else {
-        console.log(`Snake placed at direction: ${snake[0].x}, ${snake[0].y}`);
+        // console.log(`Snake placed at direction: ${snake[0].x}, ${snake[0].y}`);
         renderSnake(snake[0].x, snake[0].y);
     }
 }
@@ -243,7 +247,7 @@ function renderSnake(headX, headY) {
 function resetGame() {
     resetEnvironment();
     environment = createFood(environment, foodSizes[Math.floor(Math.random() * foodSizes.length)]);
-    console.log("Game reset. Environment and snake reinitialized.");
+    // console.log("Game reset. Environment and snake reinitialized.");
 
     // start the game loop again
     if (gameLoop) {
@@ -252,7 +256,7 @@ function resetGame() {
     gameLoop = setInterval(loop, GAME_SPEED); // Start the game loop again
     GAME_OVER = false; // Reset game over flag
     GAME_PAUSED = false; // Reset game paused flag
-    console.log("Game loop restarted.");
+    // console.log("Game loop restarted.");
 }
 
 function hasEatenFood(snake, environment) {
@@ -352,8 +356,8 @@ function loop() {
     episodeElement.innerHTML = EPISODE
     let feedback = 0;
 
-    console.log("Previous action:", previousAction);
-    console.log("Previous state:", previousState);
+    // console.log("Previous action:", previousAction);
+    // console.log("Previous state:", previousState);
 
     // 1️⃣ Apply previous action to move the snake
     predictAndTriggerAction(interpretPrediction(previousAction));
@@ -363,24 +367,24 @@ function loop() {
     const { headX, headY } = moveSnakeForward(direction);
 
     if (headX === null || headY === null) {
-        console.log("Snake cannot move, it smashed into a wall.");
+        // console.log("Snake cannot move, it smashed into a wall.");
         feedback = -1;
         GAME_OVER = true;
-        console.log("Game Over!");
+        // console.log("Game Over!");
 
         DEATH_COUNT += 1; // Increment death count
         model.setDeathCount(DEATH_COUNT);
         document.getElementById("death-count").innerHTML = DEATH_COUNT; // Update death count display
-        
+
         if(LIVING_STREAK > HIGHEST_LIVING_STREAK) {
             HIGHEST_LIVING_STREAK = LIVING_STREAK; // Update highest living streak
             const highLivingStreak = document.getElementById("hi-living-streak");
             
             highLivingStreak.innerHTML = HIGHEST_LIVING_STREAK; // Update the display
-            console.log("New High Living Streak:", HIGHEST_LIVING_STREAK);
+            // console.log("New High Living Streak:", HIGHEST_LIVING_STREAK);
         }
 
-        model.setLivingStreak(LIVING_STREAK); // Update the model
+        model.setLivingStreak(HIGHEST_LIVING_STREAK); // Update the model
         LIVING_STREAK = 0; // Reset living streak
 
         resetGame(); // Reset the game
@@ -391,7 +395,7 @@ function loop() {
     if (hasEatenFood(snake, environment)) {
         feedback = +1;
         SCORE += 10;
-        console.log("Food eaten! Score:", SCORE);
+        // console.log("Food eaten! Score:", SCORE);
         environment = createFood(environment, foodSizes[Math.floor(Math.random() * foodSizes.length)]);
         addNewTailSegment(snake);
 
@@ -402,7 +406,7 @@ function loop() {
             const highScoreElement = document.getElementById("hi-score");
             highScoreElement.innerHTML = SCORE; // Update the high score display
 
-            console.log("New High Score:", HIGH_SCORE);
+            // console.log("New High Score:", HIGH_SCORE);
             model.setHighScore(HIGH_SCORE); // Update the model's high score
         }
 
@@ -420,7 +424,7 @@ function loop() {
     if (hasHitSelf(snake)) {
         feedback = -1;
         GAME_OVER = true;
-        console.log("Game Over!");
+        // console.log("Game Over!");
 
         DEATH_COUNT += 1; // Increment death count
         model.setDeathCount(DEATH_COUNT);
@@ -432,10 +436,10 @@ function loop() {
             
             highLivingStreak.innerHTML = HIGHEST_LIVING_STREAK; // Update the display
             
-            console.log("New High Living Streak:", HIGHEST_LIVING_STREAK);
+            // console.log("New High Living Streak:", HIGHEST_LIVING_STREAK);
         }
 
-        model.setLivingStreak(LIVING_STREAK); // Update the model
+        model.setLivingStreak(HIGHEST_LIVING_STREAK); // Update the model
         LIVING_STREAK = 0; // Reset living streak
         resetGame(); // Reset the game
         // clearInterval(gameLoop);
@@ -460,13 +464,15 @@ function loop() {
     previousState = model.encodeState([snake[0].x, snake[0].y, direction]);
     previousAction = predictedAction;
 
+    if (previousAction === null) {
+        console.log("First action selected by model:", predictedAction);
+    } else {
+        console.log("Next action selected by model:", predictedAction);
+    }
+    
     // 7️⃣ Render current game state
     renderSnake(headX, headY);
     render();
-
-    if (previousAction === null) {
-        console.log("First action selected by model:", predictedAction);
-    }
 }
 
 function isMovingInDirection(cdirection) {
@@ -503,9 +509,9 @@ function moveSnakeForward(currentDirection) {
             let tail = snake[snake.length - 1];
             if (tail.x === nextTurnCell.x && tail.y === nextTurnCell.y) {
                 turnCells.shift();
-                console.log(`Turn cell at (${nextTurnCell.x}, ${nextTurnCell.y}) removed after tail passed.`);
+                // console.log(`Turn cell at (${nextTurnCell.x}, ${nextTurnCell.y}) removed after tail passed.`);
             } else {
-             console.log(`Snake turned to ${currentDirection} at (${head.x}, ${head.y}), waiting for tail to pass turn cell.`);
+                // console.log(`Snake turned to ${currentDirection} at (${head.x}, ${head.y}), waiting for tail to pass turn cell.`);
             }
         }
     }
@@ -564,7 +570,7 @@ function changeSnakeDirection(changeDirection){
     if (changeDirection === "up" || changeDirection === "down") {
         if (isMovingInDirection("up") || isMovingInDirection("down")) {
             // do not move up or down if the snake is already moving in that direction
-            console.log("Snake is already moving in this direction, no change made.");
+            // console.log("Snake is already moving in this direction, no change made.");
             return; // Exit if the snake is already moving in this direction
         }
 
@@ -572,7 +578,7 @@ function changeSnakeDirection(changeDirection){
     } else if (changeDirection === "left" || changeDirection === "right") {
         if (isMovingInDirection("left") || isMovingInDirection("right")) {
             // do not move down if the snake is already moving left or right
-            console.log("Snake is already moving in this direction, no change made.");
+            // console.log("Snake is already moving in this direction, no change made.");
             return; // Exit if the snake is already moving in this direction
         }
         direction = changeDirection; // Update the current direction of the snake
@@ -581,11 +587,11 @@ function changeSnakeDirection(changeDirection){
     // Create a turn cell at the current head position
     turnCells.push({ x: head.x, y: head.y, direction: changeDirection });
 
-    console.log(`Changing snake direction to ${changeDirection}`);
+    // console.log(`Changing snake direction to ${changeDirection}`);
 }
 
 function interpretPrediction(predictionCode) {
-    console.log(`Interpreting prediction code: ${predictionCode}`);
+    // console.log(`Interpreting prediction code: ${predictionCode}`);
     
     const map = {
         0: 'ArrowUp',
@@ -666,14 +672,17 @@ function startGame() {
                 console.log("Model State:", model.q);
 
                 if(GAME_PAUSED) {
-                    // should be branch for every other model
-                    model.save("master", modelId);
+                    const save = confirm("Do you want to save the current game state?");
+                    if (save === true) {
+                        // should be branch for every other model
+                        model.save("master", modelId);
+                    }
                 }
                 
                 break;
             default:
                 console.log(`Key pressed: ${event.key}`);
-                console.log("Invalid key pressed.");
+                // console.log("Invalid key pressed.");
         }
     });
 }
