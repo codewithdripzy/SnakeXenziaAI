@@ -44,7 +44,7 @@ function getSnakeSnapshot(snake, environment) {
 }
 
 let model = {
-    score: 0,
+    highEpisode: 0, // High episode count
     highScore: 0,
     learningRate: 0.5,
     discountFactor: 0.9, // Discount factor for future rewards
@@ -52,7 +52,6 @@ let model = {
     },
     loadModel: function (model) {
         this.q = model.q;
-        this.score = model.score;
         this.highScore = model.highScore;
     },
     setLearningRate: function(rate) {
@@ -60,6 +59,12 @@ let model = {
     },
     setFutureFactor: function(factor) {
         this.discountFactor = factor;
+    },
+    setHighScore: function(score) {
+        this.highScore = score;
+    },
+    setHighEpisode: function(episode) {
+        this.highEpisode = episode;
     },
     chooseAction: function(state, epsilon, validActions = [0, 1, 2, 3]) {
         if (!this.q[state]) this.q[state] = [0.0, 0.0, 0.0, 0.0];
@@ -125,8 +130,70 @@ let model = {
 
         return bestMove;
     },
-    save: function(type = "master") {
+    saveState: function (modelId) {
+        localStorage.setItem("snakeModelId", modelId);
+        localStorage.setItem("snakeHighScore", this.highScore);
+        localStorage.setItem("snakeNetEpisode", this.highEpisode);
+        localStorage.setItem("snakeLearningRate", this.learningRate);
+        localStorage.setItem("snakeDiscountFactor", this.discountFactor);
+        localStorage.setItem("snakeModel", JSON.stringify(this.q));
+    },
+    save: function(modelId) {
+        fetch(`http://localhost:4005/api/v1/model/save/${modelId}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                modelId: modelId,
+                model: {
+                    highScore: this.highScore,
+                    highEpisode: this.highEpisode,
+                    learningRate: this.learningRate,
+                    discountFactor: this.discountFactor,
+                    q: this.q,
+                }
+            })
+        }).then(() => alert("Changes successfully mode to model.")).catch(() => alert("Unable to make changes to model, Try again"));
         // can be, master, local, or branch
-        
+        // if (type === true) {
+        //     const password = prompt("Enter the master model write password:");
+
+        //     // Save to master
+        //     fetch(`http://localhost:4005/api/v1/model/save/master`, {
+        //         method: "POST",
+        //         headers: {
+        //             "Content-Type": "application/json",
+        //             "Authorization": `Basic ${btoa(password)}`
+        //         },
+        //         body: JSON.stringify({
+        //             modelId: "snake-genesys",
+        //             model: {
+        //                 highScore: this.highScore,
+        //                 learningRate: this.learningRate,
+        //                 discountFactor: this.discountFactor,
+        //                 q: this.q,
+        //             },
+        //         })
+        //     }).then(() => alert("Changes successfully mode to master model.")).catch(() => alert("Unable to make changes to master model, Try again"));
+        // }else {
+        //     // Save to branch
+        //     fetch(`http://localhost:4005/api/v1/model/save/${modelId}`, {
+        //         method: "POST",
+        //         headers: {
+        //             "Content-Type": "application/json"
+        //         },
+        //         body: JSON.stringify({
+        //             modelId: modelId,
+        //             model: {
+        //                 highScore: this.highScore,
+        //                 learningRate: this.learningRate,
+        //                 discountFactor: this.discountFactor,
+        //                 q: this.q,
+        //             }
+        //         })
+        //     }).then(() => alert("Changes successfully mode to model.")).catch(() => alert("Unable to make changes to model, Try again"));
+
+        // }
     }
 }

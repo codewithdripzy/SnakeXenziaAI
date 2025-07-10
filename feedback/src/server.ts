@@ -1,7 +1,6 @@
 import http from "http";
 import cors from "cors";
 import express from "express";
-import { v4 as uuid } from "uuid";
 import modelRouter from "./router/model.routes";
 import Database from "./config/database";
 import { Server } from "socket.io";
@@ -22,7 +21,7 @@ class AmiraServer{
         this.server = http.createServer(this.app);
         this.io = new Server(this.server, {
             cors: {
-                origin: 'http://localhost:5173',
+                origin: process.env.ALLOWED_ORIGINS?.split(",") || "*",
                 methods: ['GET', 'POST']
             }
         });
@@ -34,7 +33,9 @@ class AmiraServer{
     }
 
     setup(){
-        this.app.use(cors());
+        this.app.use(cors({
+            origin: process.env.ALLOWED_ORIGINS?.split(",") || "*",
+        }));
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
     }

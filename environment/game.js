@@ -1,5 +1,9 @@
+let modelId;
+
+let EPISODE = 0;  // Current episode number
 let SCORE = 0; // Initial score
 let HIGH_SCORE = 0; // High score
+let NET_EPISODE = 0;
 
 let GAME_OVER = false; // Game over flag
 let GAME_STARTED = false; // Game started flag
@@ -37,9 +41,44 @@ let turnCells = []; // Cells where the snake should turn
 let previousState = null;
 let previousAction = null;
 
-// loads the q-table and other configurationss
-function loadModel() {
+// get user fingerprint
+const getFingerprint = async () => {
+  const fp = await FingerprintJS.load();
+  const result = await fp.get();
 
+  return result.visitorId;
+};
+
+// loads the q-table and other configurationss
+async function loadModel() {
+    try {
+        modelId = await getFingerprint();
+
+        const res = await fetch(`http://localhost:4005/api/v1/model/master`, {
+            method: "GET",
+        });
+        const { data: modelData } = await res.json();
+
+        // Load the model data into the AI
+        const { data } = modelData.model;
+
+        model.setHighScore(modelData.highScore);
+        model.setHighEpisode(modelData.highEpisode);
+        model.setLearningRate(modelData.learningRate);
+        model.setFutureFactor(modelData.discountFactor)
+        model.loadModel(JSON.parse(data));
+
+        let highScore = document.getElementById("hi-score");
+        let highEpisode = document.getElementById("hi-episode");
+
+        highScore.innerHTML = modelData.highScore;
+        highEpisode.innerHTML = modelData.highEpisode;
+
+        startGame();
+    } catch (error) {
+        console.warn("Error loading model, Creating a new default model");
+        startGame();
+    }
 }
 
 // creates a 2D array to represent the environment
@@ -110,54 +149,6 @@ function createSnake() {
     return snake;
 }
 
-// function addSnakeToEnvironment(snake, environment) {
-//     // add the snake in random starting position that is not a wall note that the snake orientation can be vertical or horizontal
-//     // make sure the snake does not overlap with walls or food
-//     let minStart = 0;
-//     let maxStart = ENVIRONMENT_SIZE - 1; 
-
-//     if(PREFERENCES.ENABLE_WALLS){
-//         minStart = 1; // Start from 1 to avoid walls
-//         maxStart = ENVIRONMENT_SIZE - 2; // End at size - 2 to avoid walls
-//     }
-
-//     // position the snake head in a random position that is not a wall and let the body follow in the direction
-//     let headX, headY;
-
-//     do {
-//         headX = Math.floor(Math.random() * (maxStart - minStart + 1)) + minStart;
-//         headY = Math.floor(Math.random() * (maxStart - minStart + 1)) + minStart;
-//     } while (environment[headX][headY] !== 0); // Ensure head is placed in an empty cell
-
-//     console.log(`Placing snake head at (${headX}, ${headY}) in direction ${direction}`);
-//     snake[0] = { x: headX, y: headY, head: true }; // Set the head of the snake
-
-//     // Position the rest of the snake based on the direction
-//     for (let i = 1; i < SNAKE_LENGTH; i++) {
-//         if (direction === "up") {
-//             // the snake is going up, so the next segment will be below the head
-//             snake[i] = { x: headX + i, y: headY };
-//             console.log(`Adding segment at (${headX - i}, ${headY})`);
-//         } else if (direction === "down") {
-//             // the snake is going down, so the next segment will be above the head
-//             snake[i] = { x: headX - i, y: headY };
-//             console.log(`Adding segment at (${headX + i}, ${headY})`);
-
-//         } else if (direction === "left") {
-//             // the snake is going left, so the next segment will be to the right of the head
-//             snake[i] = { x: headX, y: headY + i };
-//             console.log(`Adding segment at (${headX}, ${headY - i})`);
-
-//         } else if (direction === "right") {
-//             // the snake is going right, so the next segment will be to the left of the head
-//             snake[i] = { x: headX, y: headY - i };
-//             console.log(`Adding segment at (${headX}, ${headY + i})`);
-//         }
-//     }
-
-//     renderSnake(headX, headY)
-// }
-
 function addSnakeToEnvironment(snake, environment) {
     const length = SNAKE_LENGTH || 3;
     const directions = ["up", "down", "left", "right"];
@@ -221,7 +212,6 @@ function addSnakeToEnvironment(snake, environment) {
     }
 }
 
-
 function clearSnake() {
     for (let segment of snake) {
         environment[segment.x][segment.y] = 0;
@@ -271,7 +261,6 @@ function hasHitWall(snake, environment) {
     // Check if the cell is marked as a wall (e.g., -1)
     return environment[head.x][head.y] === -1;
 }
-
 
 function hasHitSelf(snake) {
     let head = snake[0]; // The head of the snake
@@ -336,11 +325,18 @@ function render() {
 
     const score = document.getElementById("score");
     score.innerHTML = SCORE;
+
+    const highScoreElement = document.getElementById("hi-score");
+    highScoreElement.innerHTML = HIGH_SCORE; // Update the high score display
 }
 
 function loop() {
     if (GAME_OVER || GAME_PAUSED) return;
 
+    EPISODE++; // Increment episode count
+    let episodeElement = document.getElementById("episode");
+
+    episodeElement.innerHTML = EPISODE
     let feedback = 0;
 
     console.log("Previous action:", previousAction);
@@ -371,8 +367,23 @@ function loop() {
         addNewTailSegment(snake);
 
         if (SCORE > HIGH_SCORE) {
+            // Update high score if current score is higher
             HIGH_SCORE = SCORE;
+
+            const highScoreElement = document.getElementById("hi-score");
+            highScoreElement.innerHTML = SCORE; // Update the high score display
+
             console.log("New High Score:", HIGH_SCORE);
+            model.setHighScore(HIGH_SCORE); // Update the model's high score
+        }
+
+        if (EPISODE > NET_EPISODE) {
+            NET_EPISODE = EPISODE;
+
+            const highEpisode = document.getElementById("hi-episode");
+            highEpisode.innerHTML = EPISODE; // Update the high score display
+
+            model.setHighEpisode(NET_EPISODE);
         }
     }
 
@@ -385,6 +396,8 @@ function loop() {
         // clearInterval(gameLoop);
         return;
     }
+
+    feedback += 0.1 // for surviving the move
 
     // 5️⃣ Update Q-table & get next action
     const predictedAction = model.predict(
@@ -407,67 +420,6 @@ function loop() {
         console.log("First action selected by model:", predictedAction);
     }
 }
-
-// function loop() {
-//     let feedback = 0;
-
-//     // move the snake in the current direction
-//     if (GAME_OVER || GAME_PAUSED) {
-//         return; // Exit the loop if the game is over or paused
-//     }
-
-//     console.log("Previous action:", previousAction);
-//     console.log("Previous state:",  previousState);
-
-//     // preform the predicted action
-//     predictAndTriggerAction(interpretPrediction(previousAction));
-//     clearSnake();
-
-//     // move the snake forward
-//     const { headX, headY } = moveSnakeForward(direction);
-
-//     // Check if the snake has eaten food
-//     if (hasEatenFood(snake, environment)) {
-//         feedback = +1;
-//         SCORE += 10; // Increase score
-//         console.log("Food eaten! Score:", SCORE);
-//         environment = createFood(environment, foodSizes[Math.floor(Math.random() * foodSizes.length)]); // Create new food
-        
-//         addNewTailSegment(snake); // Add a new segment to the snake
-//         if (SCORE > HIGH_SCORE) {
-//             HIGH_SCORE = SCORE; // Update high score if current score is higher
-//             console.log("New High Score:", HIGH_SCORE);
-//         }
-//     }
-
-//     renderSnake(headX, headY)
-
-//     // // Check if the snake has hit a wall
-//     if (hasHitWall(snake, environment) || hasHitSelf(snake)) {
-//         feedback = -1; // Negative feedback for hitting a wall
-//         GAME_OVER = true; // Set game over flag
-//         console.log("Game Over!");
-//     //     saveGameState(); // Save the game state
-//     //     resetGame(); // Reset the game
-//         clearInterval(gameLoop);
-//         return;
-//     }
-
-//     // predict the next action
-//     const predictedAction = model.predict(snake, direction, feedback, previousState, previousAction);
-
-//     console.log("Predicted action:", predictedAction);
-    
-//     if (previousAction === null) {
-//         console.log("First action selected by model:", predictedAction);
-//     }
-
-//     // update the previous state and action
-//     previousState = model.encodeState([snake[0].x, snake[0].y, direction]);
-//     previousAction = predictedAction;
-
-//     render()
-// }
 
 function isMovingInDirection(cdirection) {
     if (snake.length === 0) {
@@ -626,52 +578,62 @@ function predictAndTriggerAction(predictedKey) {
     }
 }
 
-environment = createEnvironment(ENVIRONMENT_SIZE);
-snake = createSnake();
-environment = createFood(environment, foodSizes[Math.floor(Math.random() * foodSizes.length)]);
+function startGame() {
+    environment = createEnvironment(ENVIRONMENT_SIZE);
+    snake = createSnake();
+    environment = createFood(environment, foodSizes[Math.floor(Math.random() * foodSizes.length)]);
 
-// add the snake to the environment
-addSnakeToEnvironment(snake, environment);
+    // add the snake to the environment
+    addSnakeToEnvironment(snake, environment);
 
-// Start the game loop
-console.log("Game running...");
-render(); // Initial render of the game state
+    // Start the game loop
+    console.log("Game running...");
+    render(); // Initial render of the game state
 
-// add event listeners for keyboard input for testing purposes
-document.addEventListener('keydown', (event) => {
-    if (GAME_OVER) {
-        return; // Exit if the game is over or paused
-    }
+    // add event listeners for keyboard input for testing purposes
+    document.addEventListener('keydown', (event) => {
+        if (GAME_OVER) {
+            return; // Exit if the game is over or paused
+        }
 
-    switch (event.key) {        
-        case 'ArrowUp':
-            changeSnakeDirection("up");
-            break;
-        case 'ArrowDown':
-            changeSnakeDirection("down");
-            break;
-        case 'ArrowLeft':
-            changeSnakeDirection("left");
-            break;
-        case 'ArrowRight':
-            changeSnakeDirection("right");
-            break;
-        case 'r': // Reset game
-            resetGame();
-            break;
-        case 'p': // Pause game
-            GAME_PAUSED = !GAME_PAUSED; // Toggle pause state
-            console.log(GAME_PAUSED ? "Game paused." : "Game resumed.");
-            console.log("Environment State:", environment);
-            console.log("Model State:", model.q);
-            
-            break;
-        default:
-            console.log(`Key pressed: ${event.key}`);
-            console.log("Invalid key pressed.");
-    }
-});
+        switch (event.key) {        
+            // case 'ArrowUp':
+            //     changeSnakeDirection("up");
+            //     break;
+            // case 'ArrowDown':
+            //     changeSnakeDirection("down");
+            //     break;
+            // case 'ArrowLeft':
+            //     changeSnakeDirection("left");
+            //     break;
+            // case 'ArrowRight':
+            //     changeSnakeDirection("right");
+            //     break;
+            // case 'r': // Reset game
+            //     resetGame();
+            //     break;
+            case 'p': // Pause game
+                GAME_PAUSED = !GAME_PAUSED; // Toggle pause state
+                console.log(GAME_PAUSED ? "Game paused." : "Game resumed.");
+                console.log("Model State:", model.q);
 
-gameLoop = setInterval(loop, GAME_SPEED); // Run the game loop every second
+                if(GAME_PAUSED) {
+                    // should be branch for every other model
+                    model.save("master", modelId);
+                }
+                
+                break;
+            default:
+                console.log(`Key pressed: ${event.key}`);
+                console.log("Invalid key pressed.");
+        }
+    });
+}
 
-
+loadModel().then(() => {
+    console.log("Model loaded successfully.");
+    gameLoop = setInterval(loop, GAME_SPEED); // Run the game loop every second
+}).catch((error) => {
+    GAME_OVER = true; // Set game over flag if model loading fails
+    console.error("Error loading model:", error);
+})
