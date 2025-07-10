@@ -1,0 +1,43 @@
+{
+  "name": "snake-xenzia",
+  "version": "1.0.0",
+  "description": "RL Powered Snake Game DBMS",
+  "main": "app.js",
+  "scripts": {
+    "start": "'ts-node' src/server.ts",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/app.ts",
+    "get-pkg": "npm i joi && npm fund && clear && sudo npm run dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "bcrypt"
+    ]
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "firebase": "^10.14.1",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "md5": "^2.3.0",
+    "mongoose": "^8.5.3",
+    "multer": "^2.0.1",
+    "nodemailer": "^7.0.3",
+    "redis": "^5.5.6",
+    "socket.io": "^4.7.5",
+    "typescript": "^5.5.4",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^1.4.13",
+    "@types/node": "^24.0.7"
+  }
+}

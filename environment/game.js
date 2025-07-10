@@ -37,6 +37,11 @@ let turnCells = []; // Cells where the snake should turn
 let previousState = null;
 let previousAction = null;
 
+// loads the q-table and other configurationss
+function loadModel() {
+
+}
+
 // creates a 2D array to represent the environment
 function createEnvironment(size) {
     if(PREFERENCES.ENABLE_WALLS){

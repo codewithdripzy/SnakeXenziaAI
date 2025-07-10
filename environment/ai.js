@@ -1,6 +1,3 @@
-// let SCORE = 0; // Initial score
-// let HIGH_SCORE = 0; // High score
-
 let REWARD = 0; // Reward for eating food
 
 let moveMap = {
@@ -47,9 +44,23 @@ function getSnakeSnapshot(snake, environment) {
 }
 
 let model = {
+    score: 0,
+    highScore: 0,
     learningRate: 0.5,
     discountFactor: 0.9, // Discount factor for future rewards
-    q: {},
+    q: {
+    },
+    loadModel: function (model) {
+        this.q = model.q;
+        this.score = model.score;
+        this.highScore = model.highScore;
+    },
+    setLearningRate: function(rate) {
+        this.learningRate = rate;
+    },
+    setFutureFactor: function(factor) {
+        this.discountFactor = factor;
+    },
     chooseAction: function(state, epsilon, validActions = [0, 1, 2, 3]) {
         if (!this.q[state]) this.q[state] = [0.0, 0.0, 0.0, 0.0];
 
@@ -113,5 +124,9 @@ let model = {
         // const newState = encodeState([head.x, head.y, perception.direction]);
 
         return bestMove;
+    },
+    save: function(type = "master") {
+        // can be, master, local, or branch
+        
     }
 }
