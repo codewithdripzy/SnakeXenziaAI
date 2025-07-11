@@ -59,7 +59,7 @@ async function loadModel() {
     try {
         modelId = await getFingerprint();
 
-        const res = await fetch(`http://localhost:4005/api/v1/model/master`, {
+        const res = await fetch(`https://snake-xenzia-ai.vercel.app/api/v1/model/master`, {
             method: "GET",
         });
         const { data: modelData } = await res.json();

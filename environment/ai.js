@@ -146,7 +146,7 @@ let model = {
         localStorage.setItem("snakeModel", JSON.stringify(this.q));
     },
     save: function(modelId) {
-        fetch(`http://localhost:4005/api/v1/model/save/${modelId}`, {
+        fetch(`https://snake-xenzia-ai.vercel.app/api/v1/model/save/${modelId}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -169,7 +169,7 @@ let model = {
         //     const password = prompt("Enter the master model write password:");
 
         //     // Save to master
-        //     fetch(`http://localhost:4005/api/v1/model/save/master`, {
+        //     fetch(`https://snake-xenzia-ai.vercel.app/api/v1/model/save/master`, {
         //         method: "POST",
         //         headers: {
         //             "Content-Type": "application/json",
@@ -187,7 +187,7 @@ let model = {
         //     }).then(() => alert("Changes successfully mode to master model.")).catch(() => alert("Unable to make changes to master model, Try again"));
         // }else {
         //     // Save to branch
-        //     fetch(`http://localhost:4005/api/v1/model/save/${modelId}`, {
+        //     fetch(`https://snake-xenzia-ai.vercel.app/api/v1/model/save/${modelId}`, {
         //         method: "POST",
         //         headers: {
         //             "Content-Type": "application/json"
